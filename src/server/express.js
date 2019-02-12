@@ -1,55 +1,78 @@
+require('dotenv').config();
 import express from 'express';
-const server = express();
-import path from 'path';
-const expressStaticGzip = require('express-static-gzip');
+import { connect as mongooseConnect } from 'mongoose';
+import bodyParser from 'body-parser';
+
+// WEBPACK STUFF
 import webpack from 'webpack';
 import webpackHotServerMiddleware from 'webpack-hot-server-middleware';
-
 import configDevClient from '../../config/webpack.dev-client.js';
 import configDevServer from '../../config/webpack.dev-server.js';
 import configProdClient from '../../config/webpack.prod-client.js';
 import configProdServer from '../../config/webpack.prod-server.js';
 
-const isProd = process.env.NODE_ENV === 'production';
-const isDev = !isProd;
-if (isDev) {
-	const compiler = webpack([configDevClient, configDevServer]);
+const server = express();
+const expressStaticGzip = require('express-static-gzip');
+const PORT = process.env.PORT || 6060;
+const DOMAIN = process.env.DOMAIN;
 
-	const clientCompiler = compiler.compilers[0];
-	const serverCompiler = compiler.compilers[1];
+server.use(bodyParser.json());
+server.use('/api/', require('./routes/api'));
 
-	const webpackDevMiddleware = require('webpack-dev-middleware')(
-		compiler,
-		configDevClient.devServer
-	);
+if (process.env.API_TEST !== 'true') {
+	const isProd = process.env.NODE_ENV === 'production';
+	const isDev = !isProd;
+	if (isDev) {
+		const compiler = webpack([configDevClient, configDevServer]);
 
-	const webpackHotMiddlware = require('webpack-hot-middleware')(
-		clientCompiler,
-		configDevClient.devServer
-	);
+		const clientCompiler = compiler.compilers[0];
+		const serverCompiler = compiler.compilers[1];
 
-	server.use(webpackDevMiddleware);
-	server.use(webpackHotMiddlware);
-	server.use(webpackHotServerMiddleware(compiler));
-	console.log('Middleware enabled');
-} else {
-	webpack([configProdClient, configProdServer]).run((err, stats) => {
-		const render = require('../../build/prod-server-bundle.js').default;
-		server.use(
-			expressStaticGzip('dist', {
-				enableBrotli: true
-			})
+		const webpackDevMiddleware = require('webpack-dev-middleware')(
+			compiler,
+			configDevClient.devServer
 		);
-		server.use(render());
-		console.log('Webpack Compiled');
-	});
+
+		const webpackHotMiddlware = require('webpack-hot-middleware')(
+			clientCompiler,
+			configDevClient.devServer
+		);
+
+		server.use(webpackDevMiddleware);
+		server.use(webpackHotMiddlware);
+		server.use(webpackHotServerMiddleware(compiler));
+		console.log('Middleware enabled');
+	} else {
+		webpack([configProdClient, configProdServer]).run((err, stats) => {
+			const render = require('../../build/prod-server-bundle.js').default;
+			server.use(
+				expressStaticGzip('dist', {
+					enableBrotli: true
+				})
+			);
+			server.use(render());
+			console.log('Webpack Compiled');
+		});
+	}
 }
 
-const PORT = 8080;
-server.listen(PORT, () => {
-	console.log(
-		`Server listening on http://localhost:${PORT} in ${
-			process.env.NODE_ENV
-		}`
-	);
+server.use((err, req, res, next) => {
+	res.status(err.status).send({ msg: err.message });
+});
+
+console.log(process.env.MONGODB);
+
+mongooseConnect(process.env.MONGODB, err => {
+	if (err) {
+		return console.log(
+			'\x1b[33m%s\x1b[0m',
+			"Couldn't connect to database!"
+		);
+	}
+	server.listen(PORT, () => {
+		console.log(
+			'\x1b[33m%s\x1b[0m',
+			`Server listening on ${DOMAIN}:${PORT} in ${process.env.NODE_ENV}`
+		);
+	});
 });

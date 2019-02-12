@@ -15,6 +15,7 @@
 		"transform-runtime",
 		"transform-class-properties",
 		"react-hot-loader/babel",
-		"syntax-dynamic-import"
+		"syntax-dynamic-import",
+		"transform-es2015-spread"
 	]
 }
