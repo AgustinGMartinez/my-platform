@@ -5,14 +5,15 @@ const { check } = require('express-validator/check');
 
 const auth = require('../controllers/auth.js');
 
-// Router.get('/allusers', isAuth, auth.allUsers);
+Router.get('/allusers', isAuth, auth.allUsers);
 
 Router.post(
 	'/signup',
 	[
 		check('email')
 			.isEmail()
-			.normalizeEmail(),
+			.normalizeEmail()
+			.withMessage('Invalid email'),
 		check('password')
 			.trim()
 			.isLength({ min: 6, max: 22 })

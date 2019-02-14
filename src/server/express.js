@@ -2,6 +2,7 @@ require('dotenv').config();
 import express from 'express';
 import { connect as mongooseConnect } from 'mongoose';
 import bodyParser from 'body-parser';
+import errorMiddleware from './middleware/error';
 
 // WEBPACK STUFF
 import webpack from 'webpack';
@@ -55,12 +56,9 @@ if (process.env.API_TEST !== 'true') {
 		});
 	}
 }
-
-server.use((err, req, res, next) => {
-	res.status(err.status).send({ msg: err.message });
-});
-
-console.log(process.env.MONGODB);
+if (process.env.FRONT_TEST !== 'true') {
+	server.use(errorMiddleware);
+}
 
 mongooseConnect(process.env.MONGODB, err => {
 	if (err) {

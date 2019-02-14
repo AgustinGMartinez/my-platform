@@ -2,7 +2,7 @@ import React from 'react';
 
 class Navbar extends React.Component {
 	render() {
-		return <footer>Some footer here.</footer>;
+		return null;
 	}
 }
 

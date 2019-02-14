@@ -1,6 +1,7 @@
 const path = require('path');
 const webpack = require('webpack');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const ErrorOverlayPlugin = require('error-overlay-webpack-plugin');
 
 module.exports = {
 	name: 'client',
@@ -37,7 +38,7 @@ module.exports = {
 			colors: true
 		}
 	},
-	devtool: 'source-map',
+	devtool: 'cheap-module-source-map',
 	module: {
 		rules: [
 			{
@@ -160,6 +161,7 @@ module.exports = {
 			}
 		}),
 		new webpack.HotModuleReplacementPlugin(),
-		new ExtractTextPlugin('[name].css')
+		new ExtractTextPlugin('[name].css'),
+		new ErrorOverlayPlugin()
 	]
 };
